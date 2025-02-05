@@ -1,0 +1,36 @@
+trigger:
+- main  # Se ejecuta cuando hay un push en main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  acrName: 'registrycursoia'  # Nombre del Azure Container Registry
+  acrLoginServer: 'registrycursoia.azurecr.io'
+  acrUsername: '$(acr-username)'  # Definir en Azure DevOps > Variables
+  acrPassword: '$(acr-password)'
+  imageName: 'flask-app-pipeline'  # Nombre de la imagen
+
+steps:
+- task: Docker@2
+  displayName: 'Login en Azure Container Registry'
+  inputs:
+    command: login
+    containerRegistry: '$(acrLoginServer)'
+    username: '$(acrUsername)'
+    password: '$(acrPassword)'
+
+- task: Docker@2
+  displayName: 'Construir imagen Docker'
+  inputs:
+    command: build
+    Dockerfile: '**/Dockerfile'
+    repository: '$(acrLoginServer)/$(imageName)'
+    tags: latest
+
+- task: Docker@2
+  displayName: 'Subir imagen a ACR'
+  inputs:
+    command: push
+    repository: '$(acrLoginServer)/$(imageName)'
+    tags: latest
